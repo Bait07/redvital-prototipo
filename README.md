@@ -4,6 +4,12 @@ Prototipo académico de una plataforma que conecta bancos de sangre, hospitales 
 
 Curso: Arquitectura de Software. Ingeniería de Software, Tecnológica del Oriente, 2026.
 
+[![Pruebas](https://github.com/Bait07/redvital-prototipo/actions/workflows/pruebas.yml/badge.svg)](https://github.com/Bait07/redvital-prototipo/actions/workflows/pruebas.yml)
+
+* Prototipo desplegado: https://redvital-w17f.onrender.com
+* Documentación de la API: https://redvital-w17f.onrender.com/docs
+* Diagramas UML (PlantUML): [docs/diagramas](docs/diagramas)
+
 ## Arquitectura
 
 El prototipo se ejecuta como un único servicio web (para caber en el plan gratuito de Render), pero está organizado en módulos independientes con los mismos límites que tendrían los microservicios de la arquitectura objetivo:
@@ -48,7 +54,14 @@ uvicorn app.main:app --reload
 
 Abrir http://localhost:8000 (panel) y http://localhost:8000/docs (documentación de la API).
 
-Pruebas: `pytest`
+Pruebas: `pytest` (también se ejecutan en GitHub Actions en cada push).
+
+Con Docker:
+
+```bash
+docker build -t redvital .
+docker run -p 8000:8000 redvital
+```
 
 ## Usuarios de demostración
 
@@ -85,4 +98,4 @@ Nota: el plan gratuito apaga el servicio tras 15 minutos sin uso y tarda cerca d
 6. Restablecer el proveedor, esperar 30 s y pulsar "Reintentar pendientes": el circuito vuelve a CERRADO y se envían las alertas.
 7. Inventario (rol Banco): registrar la donación de un donante elegible; la unidad se asigna sola a la solicitud abierta.
 
-Para volver a los datos iniciales: `POST /api/demo/reiniciar` con el rol Administrador (desde /docs).
+Para volver a los datos iniciales: rol Administrador, pestaña "Alertas y resiliencia", botón "Reiniciar datos de demo" (o `POST /api/demo/reiniciar` desde /docs).
