@@ -49,6 +49,7 @@
   .leyenda { font-size: 12px; color: var(--gris); margin-top: 8px; }
   .eventos { list-style: none; margin: 0; padding: 0; max-height: 330px; overflow: auto; font-size: 13px; }
   .eventos li { padding: 7px 0; border-bottom: 1px solid var(--linea); display: grid; grid-template-columns: 62px 1fr; gap: 8px; }
+  .eventos li.vacio { display: block; color: var(--gris); }
   .eventos code { color: var(--navy); font-weight: 700; font-family: inherit; }
   .eventos small { color: var(--gris); display: block; }
   table { width: 100%; border-collapse: collapse; font-size: 14px; }
@@ -257,7 +258,7 @@ async function cargarTablero() {
       <div class="pista"><div class="relleno" style="width:${n / max * 100}%"></div></div><span>${n}</span></div>`;
   }).join("");
   $("#eventos").innerHTML = t.eventos.map(e => `<li><span>${e.hora}</span><div><code>${esc(e.tipo)}</code>
-    <small>${esc(Object.entries(e.datos).map(([k, v]) => k + ": " + v).join(" · "))}</small></div></li>`).join("") || "<li>Sin eventos todavía</li>";
+    <small>${esc(Object.entries(e.datos).map(([k, v]) => k + ": " + v).join(" · "))}</small></div></li>`).join("") || `<li class="vacio">Sin eventos todavía. Publique una solicitud para verlos aquí.</li>`;
 }
 
 async function cargarSolicitudes() {
