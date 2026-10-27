@@ -1,0 +1,50 @@
+@startuml casos_de_uso
+!include estilo.iuml
+left to right direction
+title Diagrama de casos de uso RedVital
+
+actor "Donante" as DON
+actor "Hospital\n(IPS solicitante)" as HOS
+actor "Personal del\nbanco de sangre" as BAN
+actor "Administrador" as ADM
+actor "Servicio de\nnotificaciones" as NOT <<sistema>>
+
+rectangle "Plataforma RedVital" {
+  usecase "CU01 Registrarse como donante" as CU01
+  usecase "CU02 Iniciar sesión" as CU02
+  usecase "CU03 Evaluar elegibilidad" as CU03
+  usecase "CU04 Agendar cita de donación" as CU04
+  usecase "CU08 Responder alerta" as CU08
+  usecase "CU05 Publicar solicitud urgente" as CU05
+  usecase "CU06 Emparejar donantes\ny unidades compatibles" as CU06
+  usecase "CU07 Enviar alertas" as CU07
+  usecase "CU09 Registrar donación" as CU09
+  usecase "CU10 Gestionar inventario" as CU10
+  usecase "CU11 Despachar unidades" as CU11
+  usecase "CU12 Administrar sedes y usuarios" as CU12
+  usecase "CU13 Consultar tablero\nde indicadores" as CU13
+}
+
+DON --> CU01
+DON --> CU02
+DON --> CU04
+DON --> CU08
+HOS --> CU02
+HOS --> CU05
+BAN --> CU02
+BAN --> CU09
+BAN --> CU10
+BAN --> CU11
+ADM --> CU02
+ADM --> CU12
+ADM --> CU13
+
+CU01 ..> CU03 : <<include>>
+CU04 ..> CU03 : <<include>>
+CU05 ..> CU06 : <<include>>
+CU06 ..> CU03 : <<include>>
+CU06 ..> CU07 : <<include>>
+CU04 ..> CU08 : <<extend>>
+CU11 ..> CU10 : <<include>>
+CU07 --> NOT
+@enduml

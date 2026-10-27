@@ -1,0 +1,52 @@
+@startuml clases_patrones
+!include estilo.iuml
+hide empty members
+left to right direction
+title Diagrama de clases RedVital: capa de servicios y patrones
+
+class SolicitudUrgente <<Dominio>>
+class Donante <<Dominio>>
+class UnidadSangre <<Dominio>>
+  class ServicioEmparejamiento {
+    + emparejar(solicitud : SolicitudUrgente) : ResultadoEmparejamiento
+  }
+  class ReglaCompatibilidad <<Strategy>> {
+    + donantesCompatibles(receptor : TipoSanguineo) : List<TipoSanguineo>
+  }
+  interface RepositorioDonantes <<Repository>> {
+    + buscarPorTipos(tipos : List<TipoSanguineo>) : List<Donante>
+    + guardar(donante : Donante)
+  }
+  interface RepositorioInventario <<Repository>> {
+    + disponiblesPorTipo(tipos : List<TipoSanguineo>) : List<UnidadSangre>
+    + guardar(unidad : UnidadSangre)
+  }
+  class BusEventos <<Publicador/Suscriptor>> {
+    + publicar(evento : Evento)
+    + suscribir(tipo : String, manejador)
+  }
+  class ServicioNotificaciones {
+    + notificarDonantes(evento : Evento)
+  }
+  class CircuitBreaker <<Circuit Breaker>> {
+    - estado : EstadoCircuito
+    - fallosConsecutivos : Integer
+    - umbralFallos : Integer
+    - tiempoEspera : Integer
+    + ejecutar(operacion)
+  }
+  interface ProveedorMensajeria {
+    + enviar(destino : String, mensaje : String)
+  }
+
+ServicioEmparejamiento --> ReglaCompatibilidad
+ServicioEmparejamiento --> RepositorioDonantes
+ServicioEmparejamiento --> RepositorioInventario
+ServicioEmparejamiento ..> BusEventos : publica
+ServicioNotificaciones ..> BusEventos : se suscribe
+ServicioNotificaciones --> CircuitBreaker
+CircuitBreaker --> ProveedorMensajeria
+ServicioEmparejamiento ..> SolicitudUrgente : procesa
+RepositorioDonantes ..> Donante : gestiona
+RepositorioInventario ..> UnidadSangre : gestiona
+@enduml

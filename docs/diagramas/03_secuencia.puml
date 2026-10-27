@@ -1,0 +1,55 @@
+@startuml secuencia
+!include estilo.iuml
+autonumber
+title Diagrama de secuencia: publicación y atención de una solicitud urgente
+
+actor "Hospital" as HOS
+participant "API Gateway" as GW
+participant "Servicio de\nsolicitudes" as SOL
+queue "Bus de eventos" as BUS
+participant "Servicio de\nemparejamiento" as EMP
+participant "Caché de\ninventario" as CACHE
+participant "Servicio de\nnotificaciones" as NOT
+participant "Circuit Breaker" as CB
+participant "Proveedor\nSMS / correo" as PROV
+actor "Donante" as DON
+
+HOS -> GW : POST /solicitudes (token, tipo O-, 4 unidades)
+GW -> GW : validar token y rol
+GW -> SOL : crearSolicitud(datos)
+SOL -> SOL : validar y guardar (Repositorio)
+SOL -> BUS : publicar SolicitudCreada
+SOL --> GW : 201 Creada (id, estado ABIERTA)
+GW --> HOS : confirmación inmediata
+
+BUS -> EMP : SolicitudCreada
+EMP -> EMP : tiposCompatibles(O-) = [O-]
+EMP -> CACHE : disponibles(O-)
+alt dato en caché
+  CACHE --> EMP : unidades disponibles
+else caché vacía (Cache Aside)
+  EMP -> EMP : consultar Repositorio de inventario
+  EMP -> CACHE : guardar resultado (TTL 30 s)
+end
+EMP -> EMP : reservar unidades disponibles
+opt faltan unidades
+  EMP -> EMP : filtrar donantes compatibles,\nelegibles y cercanos
+  EMP -> BUS : publicar DonantesSeleccionados
+  BUS -> NOT : DonantesSeleccionados
+  loop por cada donante
+    NOT -> CB : ejecutar(enviar alerta)
+    alt circuito CERRADO
+      CB -> PROV : enviar(mensaje)
+      PROV --> CB : entregado
+      PROV -> DON : alerta de donación urgente
+    else circuito ABIERTO (proveedor caído)
+      CB --> NOT : rechazo rápido
+      NOT -> NOT : encolar para reintento
+    end
+  end
+end
+
+DON -> GW : POST /alertas/{id}/respuesta (acepta)
+GW -> SOL : registrarRespuesta
+SOL --> DON : cita sugerida en la sede más cercana
+@enduml

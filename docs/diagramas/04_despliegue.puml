@@ -1,0 +1,56 @@
+@startuml despliegue
+!include estilo.iuml
+skinparam nodesep 30
+skinparam ranksep 45
+title Diagrama de despliegue RedVital (arquitectura objetivo en la nube)
+
+node "Dispositivo del usuario" as CLI {
+  artifact "Navegador web / app móvil" as WEB
+}
+
+node "Proveedor de nube" as NUBE {
+  node "Balanceador de carga\n(HTTPS, TLS 1.2+)" as LB
+  node "Clúster de contenedores" as K8S {
+    component "API Gateway\n(JWT, enrutamiento,\nlímite de tasa)" as GW
+    component "Servicio de\nsolicitudes" as SSOL
+    component "Servicio de\ndonantes" as SDON
+    component "Servicio de\ninventario" as SINV
+    component "Servicio de\nemparejamiento\n(autoescalable)" as SEMP
+    component "Servicio de\nnotificaciones\n(Circuit Breaker)" as SNOT
+  }
+  node "Servicios gestionados" as GES {
+    queue "Broker de mensajes\n(Publicador/Suscriptor)" as MQ
+    database "Caché Redis" as REDIS
+    database "BD solicitudes" as DB2
+    database "BD donantes" as DB1
+    database "BD inventario" as DB3
+  }
+}
+
+node "Servicios externos" as EXT {
+  node "Pasarela SMS y correo" as SMS
+  node "Sistemas de información\nhospitalaria" as HIS
+}
+
+WEB --> LB : HTTPS
+LB --> GW
+GW --> SSOL : REST
+GW --> SDON : REST
+GW --> SINV : REST
+SSOL --> DB2
+SDON --> DB1
+SINV --> DB3
+SSOL --> MQ : publica
+MQ --> SEMP : SolicitudCreada
+SEMP --> REDIS : Cache Aside
+SEMP --> MQ : DonantesSeleccionados
+MQ --> SNOT : consume
+SNOT --> SMS : HTTPS
+HIS --> GW : API REST
+
+note right of K8S
+  Prototipo académico: estos módulos se ejecutan
+  en un único servicio web de Render (plan gratuito),
+  comunicados por un bus de eventos en memoria.
+end note
+@enduml

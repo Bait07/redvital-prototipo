@@ -1,0 +1,114 @@
+@startuml clases
+!include estilo.iuml
+skinparam nodesep 40
+skinparam ranksep 50
+hide empty members
+title Diagrama de clases RedVital: modelo de dominio
+
+package "Dominio" {
+  abstract class Usuario {
+    # id : UUID
+    # nombre : String
+    # correo : String
+    # rol : Rol
+    + autenticar(clave : String) : Token
+  }
+  class Donante {
+    - documento : String
+    - tipoSanguineo : TipoSanguineo
+    - fechaNacimiento : Date
+    - pesoKg : Float
+    - ultimaDonacion : Date
+    - canalPreferido : Canal
+    - consentimientoDatos : Boolean
+    + esElegible(parametros : ParametrosElegibilidad) : Boolean
+    + responderAlerta(alerta : Alerta, acepta : Boolean)
+  }
+  class PersonalBanco {
+    - cargo : String
+    + registrarDonacion(donante : Donante) : UnidadSangre
+  }
+  class RepresentanteHospital {
+    + publicarSolicitud(datos) : SolicitudUrgente
+  }
+  class Administrador {
+    + gestionarSede(sede : SedeBanco)
+  }
+  class SedeBanco {
+    - nombre : String
+    - municipio : String
+    - latitud : Float
+    - longitud : Float
+  }
+  class Hospital {
+    - nit : String
+    - nombre : String
+    - municipio : String
+  }
+  class SolicitudUrgente {
+    - id : UUID
+    - tipoReceptor : TipoSanguineo
+    - componente : Componente
+    - unidadesRequeridas : Integer
+    - urgencia : NivelUrgencia
+    - estado : EstadoSolicitud
+    - fechaCreacion : DateTime
+    + unidadesPendientes() : Integer
+  }
+  class UnidadSangre {
+    - codigo : String
+    - tipo : TipoSanguineo
+    - componente : Componente
+    - fechaExtraccion : Date
+    - fechaVencimiento : Date
+    - estado : EstadoUnidad
+    + reservar(solicitud : SolicitudUrgente)
+    + estaVencida() : Boolean
+  }
+  class Donacion {
+    - fecha : DateTime
+    - volumenMl : Integer
+  }
+  class CitaDonacion {
+    - fechaHora : DateTime
+    - estado : EstadoCita
+  }
+  class Alerta {
+    - canal : Canal
+    - fechaEnvio : DateTime
+    - respuesta : RespuestaAlerta
+  }
+  enum TipoSanguineo {
+    O_NEG
+    O_POS
+    A_NEG
+    A_POS
+    B_NEG
+    B_POS
+    AB_NEG
+    AB_POS
+  }
+  enum EstadoUnidad {
+    DISPONIBLE
+    RESERVADA
+    DESPACHADA
+    VENCIDA
+  }
+}
+
+Usuario <|-- Donante
+Usuario <|-- PersonalBanco
+Usuario <|-- RepresentanteHospital
+Usuario <|-- Administrador
+PersonalBanco "*" --> "1" SedeBanco : labora en
+RepresentanteHospital "*" -> "1" Hospital : representa
+Hospital "1" *-- "*" SolicitudUrgente : emite
+Donante "1" --> "*" CitaDonacion : agenda
+CitaDonacion "*" -> "1" SedeBanco : en
+Donante "1" --> "*" Donacion : realiza
+Donacion "1" -> "1" UnidadSangre : genera
+SedeBanco "1" o-- "*" UnidadSangre : almacena
+SolicitudUrgente "0..1" <-- "*" UnidadSangre : reservada para
+SolicitudUrgente "1" -> "*" Alerta : origina
+Alerta "*" --> "1" Donante : dirigida a
+@enduml
