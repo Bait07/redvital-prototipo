@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: redvital
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /salud
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CB_UMBRAL
+        value: "3"
+      - key: CB_ESPERA
+        value: "30"
+      - key: CACHE_TTL
+        value: "30"

@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RedVital · Panel de operación</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #1B365D; --navy-osc: #002060; --navy-claro: #E8EEF6; --tinta: #1d2733;
+    --gris: #5d6b7c; --linea: #d6dde7; --fondo: #f5f7fa; --blanco: #fff;
+    --sangre: #A4161A; --sangre-claro: #fbeaea; --ok: #2E7D4F; --ok-claro: #e7f4ec;
+    --alerta: #B26A00; --alerta-claro: #fff4e0;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Source Sans 3", Arial, sans-serif; color: var(--tinta); background: var(--fondo); font-size: 15px; }
+  header { background: var(--navy-osc); color: #fff; padding: 14px 24px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+  .marca { display: flex; align-items: center; gap: 10px; }
+  .gota { width: 26px; height: 32px; }
+  .marca h1 { font-family: "Source Serif 4", Georgia, serif; font-size: 22px; margin: 0; letter-spacing: .3px; }
+  .marca small { display: block; font-size: 12px; opacity: .75; font-weight: 400; }
+  .sesion { margin-left: auto; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .sesion span { font-size: 13px; opacity: .85; margin-right: 6px; }
+  .btn-rol { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.4); padding: 6px 12px; border-radius: 4px; cursor: pointer; font: inherit; font-size: 13px; }
+  .btn-rol.activo { background: #fff; color: var(--navy-osc); border-color: #fff; font-weight: 700; }
+  nav { background: var(--blanco); border-bottom: 1px solid var(--linea); padding: 0 24px; display: flex; gap: 4px; overflow-x: auto; }
+  nav button { border: 0; background: none; padding: 13px 14px; font: inherit; color: var(--gris); cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; }
+  nav button.activo { color: var(--navy-osc); border-bottom-color: var(--navy); font-weight: 700; }
+  nav a { margin-left: auto; align-self: center; color: var(--navy); font-size: 13px; text-decoration: none; white-space: nowrap; }
+  main { padding: 22px 24px 40px; max-width: 1240px; margin: 0 auto; }
+  .vista { display: none; } .vista.activa { display: block; }
+  h2 { font-family: "Source Serif 4", Georgia, serif; color: var(--navy-osc); font-size: 21px; margin: 0 0 4px; }
+  .sub { color: var(--gris); margin: 0 0 18px; font-size: 14px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-bottom: 18px; }
+  .kpi { background: var(--blanco); border: 1px solid var(--linea); border-left: 4px solid var(--navy); padding: 14px 16px; border-radius: 4px; }
+  .kpi b { display: block; font-size: 28px; color: var(--navy-osc); font-variant-numeric: tabular-nums; }
+  .kpi span { color: var(--gris); font-size: 13px; }
+  .rejilla { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; }
+  @media (max-width: 860px) { .rejilla { grid-template-columns: 1fr; } }
+  .panel { background: var(--blanco); border: 1px solid var(--linea); border-radius: 4px; padding: 16px 18px; margin-bottom: 16px; }
+  .panel h3 { margin: 0 0 12px; font-size: 15px; color: var(--navy-osc); text-transform: uppercase; letter-spacing: .6px; }
+  .barra { display: grid; grid-template-columns: 44px 1fr 34px; align-items: center; gap: 10px; margin: 7px 0; font-variant-numeric: tabular-nums; }
+  .barra .tipo { font-weight: 700; }
+  .barra .pista { background: var(--navy-claro); height: 16px; border-radius: 2px; overflow: hidden; }
+  .barra .relleno { height: 100%; background: var(--navy); }
+  .barra.critico .relleno { background: var(--sangre); }
+  .barra.critico .tipo { color: var(--sangre); }
+  .leyenda { font-size: 12px; color: var(--gris); margin-top: 8px; }
+  .eventos { list-style: none; margin: 0; padding: 0; max-height: 330px; overflow: auto; font-size: 13px; }
+  .eventos li { padding: 7px 0; border-bottom: 1px solid var(--linea); display: grid; grid-template-columns: 62px 1fr; gap: 8px; }
+  .eventos code { color: var(--navy); font-weight: 700; font-family: inherit; }
+  .eventos small { color: var(--gris); display: block; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { background: var(--navy-osc); color: #fff; text-align: left; padding: 8px 10px; font-weight: 600; }
+  td { padding: 8px 10px; border-bottom: 1px solid var(--linea); vertical-align: top; }
+  tbody tr:nth-child(even) td { background: #fafbfd; }
+  .tabla { overflow-x: auto; }
+  .chip { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 700; background: var(--navy-claro); color: var(--navy); white-space: nowrap; }
+  .chip.ok { background: var(--ok-claro); color: var(--ok); }
+  .chip.mal { background: var(--sangre-claro); color: var(--sangre); }
+  .chip.aviso { background: var(--alerta-claro); color: var(--alerta); }
+  form.campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; align-items: end; }
+  label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--gris); }
+  input, select { font: inherit; padding: 8px 9px; border: 1px solid var(--linea); border-radius: 4px; color: var(--tinta); background: #fff; }
+  label.check { flex-direction: row; align-items: center; gap: 8px; color: var(--tinta); }
+  .btn { background: var(--navy); color: #fff; border: 0; padding: 9px 16px; border-radius: 4px; font: inherit; font-weight: 600; cursor: pointer; }
+  .btn:hover { background: var(--navy-osc); }
+  .btn.sec { background: #fff; color: var(--navy); border: 1px solid var(--navy); }
+  .btn.peligro { background: var(--sangre); }
+  .btn.mini { padding: 4px 10px; font-size: 13px; }
+  .aviso-rol { background: var(--navy-claro); border-left: 4px solid var(--navy); padding: 10px 14px; font-size: 14px; margin-bottom: 14px; }
+  .circuito { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+  .foco { width: 74px; height: 74px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 12px; text-align: center; }
+  .foco.CERRADO { background: var(--ok); } .foco.ABIERTO { background: var(--sangre); } .foco.SEMIABIERTO { background: var(--alerta); }
+  .datos-cb { font-size: 14px; line-height: 1.7; }
+  #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--tinta); color: #fff; padding: 10px 18px; border-radius: 4px; font-size: 14px; opacity: 0; transition: opacity .25s; pointer-events: none; max-width: 90vw; }
+  #toast.ver { opacity: 1; }
+  .resultado { margin-top: 12px; font-size: 14px; }
+  footer { text-align: center; color: var(--gris); font-size: 12px; padding: 0 0 24px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="marca">
+    <svg class="gota" viewBox="0 0 26 32" aria-hidden="true"><path d="M13 1C13 1 2 14 2 21a11 11 0 0 0 22 0C24 14 13 1 13 1z" fill="#C8102E"/><path d="M8 22a5 5 0 0 0 5 5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+    <h1>RedVital <small>Red de donación y bancos de sangre</small></h1>
+  </div>
+  <div class="sesion">
+    <span id="quien">Sin sesión</span>
+    <button class="btn-rol" data-usuario="hospital">Hospital</button>
+    <button class="btn-rol" data-usuario="banco">Banco de sangre</button>
+    <button class="btn-rol" data-usuario="admin">Administrador</button>
+  </div>
+</header>
+<nav>
+  <button data-vista="tablero" class="activo">Tablero</button>
+  <button data-vista="solicitudes">Solicitudes urgentes</button>
+  <button data-vista="donantes">Donantes</button>
+  <button data-vista="inventario">Inventario</button>
+  <button data-vista="alertas">Alertas y resiliencia</button>
+  <a href="/docs" target="_blank" rel="noopener">Documentación de la API</a>
+</nav>
+
+<main>
+  <section class="vista activa" id="v-tablero">
+    <h2>Tablero de operación</h2>
+    <p class="sub">Estado del inventario, las solicitudes y los eventos que circulan entre los módulos.</p>
+    <div class="kpis" id="kpis"></div>
+    <div class="rejilla">
+      <div class="panel"><h3>Glóbulos rojos disponibles por tipo</h3><div id="barras"></div>
+        <p class="leyenda">En rojo: tipos en nivel crítico (menos de 3 unidades).</p></div>
+      <div class="panel"><h3>Bus de eventos (Publicador/Suscriptor)</h3><ul class="eventos" id="eventos"></ul></div>
+    </div>
+  </section>
+
+  <section class="vista" id="v-solicitudes">
+    <h2>Solicitudes urgentes</h2>
+    <p class="sub">El hospital publica la necesidad; el emparejamiento reserva inventario y alerta donantes compatibles.</p>
+    <div class="panel" id="panel-solicitud">
+      <h3>Publicar solicitud</h3>
+      <form class="campos" id="f-solicitud">
+        <label>Tipo del receptor<select name="tipo_receptor" id="sel-tipo"></select></label>
+        <label>Componente<select name="componente"><option>Glóbulos rojos</option><option>Plaquetas</option><option>Plasma</option></select></label>
+        <label>Unidades<input type="number" name="unidades_requeridas" min="1" max="20" value="4"></label>
+        <label>Urgencia<select name="urgencia"><option>CRÍTICA</option><option selected>ALTA</option><option>MEDIA</option></select></label>
+        <button class="btn">Publicar</button>
+      </form>
+      <div class="resultado" id="r-solicitud"></div>
+    </div>
+    <div class="panel"><h3>Solicitudes registradas</h3><div class="tabla" id="t-solicitudes"></div></div>
+  </section>
+
+  <section class="vista" id="v-donantes">
+    <h2>Donantes</h2>
+    <p class="sub">Registro abierto al público con evaluación automática de elegibilidad.</p>
+    <div class="panel">
+      <h3>Registrarse como donante</h3>
+      <form class="campos" id="f-donante">
+        <label>Documento<input name="documento" required minlength="5"></label>
+        <label>Nombre completo<input name="nombre" required></label>
+        <label>Tipo sanguíneo<select name="tipo" id="sel-tipo2"></select></label>
+        <label>Fecha de nacimiento<input type="date" name="fecha_nacimiento" required value="1998-05-14"></label>
+        <label>Peso (kg)<input type="number" step="0.1" name="peso_kg" value="68" required></label>
+        <label>Teléfono<input name="telefono" value="3001234567" required></label>
+        <label>Correo<input type="email" name="correo" value="donante@correo.demo" required></label>
+        <label>Canal preferido<select name="canal"><option>SMS</option><option>Correo</option></select></label>
+        <label class="check"><input type="checkbox" name="consentimiento_datos" checked> Autorizo el tratamiento de mis datos (Ley 1581 de 2012)</label>
+        <button class="btn">Registrarme</button>
+      </form>
+      <div class="resultado" id="r-donante"></div>
+    </div>
+    <div class="panel"><h3>Donantes registrados</h3><div class="tabla" id="t-donantes"></div></div>
+  </section>
+
+  <section class="vista" id="v-inventario">
+    <h2>Inventario de unidades</h2>
+    <p class="sub">Las unidades nuevas se asignan automáticamente a la solicitud abierta más antigua que las necesite.</p>
+    <div class="panel" id="panel-donacion">
+      <h3>Registrar donación</h3>
+      <form class="campos" id="f-donacion">
+        <label>Documento del donante<input name="documento" required></label>
+        <label>Componente<select name="componente"><option>Glóbulos rojos</option><option>Plaquetas</option><option>Plasma</option></select></label>
+        <button class="btn">Registrar donación</button>
+      </form>
+      <div class="resultado" id="r-donacion"></div>
+    </div>
+    <div class="panel"><h3>Unidades</h3><div class="tabla" id="t-inventario"></div></div>
+  </section>
+
+  <section class="vista" id="v-alertas">
+    <h2>Alertas y resiliencia</h2>
+    <p class="sub">El Circuit Breaker protege el envío de alertas cuando la pasarela de mensajería falla.</p>
+    <div class="panel">
+      <h3>Circuit Breaker de la pasarela SMS y correo</h3>
+      <div class="circuito">
+        <div class="foco" id="foco">…</div>
+        <div class="datos-cb" id="datos-cb"></div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-left:auto">
+          <button class="btn peligro" id="b-falla">Simular caída del proveedor</button>
+          <button class="btn sec" id="b-reintentar">Reintentar pendientes</button>
+        </div>
+      </div>
+    </div>
+    <div class="panel"><h3>Alertas enviadas a donantes</h3>
+      <p class="leyenda" style="margin-top:-6px">Los botones simulan la respuesta del donante desde el enlace recibido.</p>
+      <div class="tabla" id="t-alertas"></div></div>
+  </section>
+</main>
+<footer>Prototipo académico · Arquitectura de Software · Datos ficticios de demostración</footer>
+<div id="toast"></div>
+
+<script>
+const TIPOS = ["O-","O+","A-","A+","B-","B+","AB-","AB+"];
+const CLAVES = {hospital: "hospital123", banco: "banco123", admin: "admin123"};
+let sesion = null;
+try { sesion = JSON.parse(sessionStorage.getItem("redvital")); } catch (e) { sesion = null; }
+
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("ver"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("ver"), 3200); }
+
+async function api(ruta, opciones = {}) {
+  const cab = {"Content-Type": "application/json"};
+  if (sesion) cab.Authorization = "Bearer " + sesion.token;
+  const r = await fetch("/api" + ruta, {...opciones, headers: cab});
+  const datos = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    const d = datos.detail;
+    throw new Error(Array.isArray(d) ? d.map(x => x.msg).join("; ") : (d || "Error " + r.status));
+  }
+  return datos;
+}
+
+async function entrar(usuario) {
+  try {
+    const d = await api("/auth/login", {method: "POST", body: JSON.stringify({usuario, clave: CLAVES[usuario]})});
+    sesion = {token: d.token, rol: d.rol, nombre: d.nombre};
+    try { sessionStorage.setItem("redvital", JSON.stringify(sesion)); } catch (e) {}
+    pintarSesion(); toast("Sesión iniciada como " + d.nombre); refrescar();
+  } catch (e) { toast(e.message); }
+}
+
+function pintarSesion() {
+  $("#quien").textContent = sesion ? sesion.nombre : "Sin sesión";
+  document.querySelectorAll(".btn-rol").forEach(b => b.classList.toggle("activo", sesion && b.dataset.usuario === sesion.rol));
+  $("#panel-solicitud").style.display = (!sesion || sesion.rol === "hospital") ? "" : "none";
+  $("#panel-donacion").style.display = (!sesion || sesion.rol === "banco") ? "" : "none";
+}
+
+function tabla(cols, filas, vacio = "Sin registros") {
+  if (!filas.length) return `<p class="leyenda">${vacio}</p>`;
+  return `<table><thead><tr>${cols.map(c => `<th>${c[0]}</th>`).join("")}</tr></thead><tbody>` +
+    filas.map(f => `<tr>${cols.map(c => `<td>${c[1](f)}</td>`).join("")}</tr>`).join("") + "</tbody></table>";
+}
+const chipEstado = e => {
+  const clase = {"CUBIERTA":"ok","ENVIADA":"","ACEPTADA":"ok","DISPONIBLE":"ok","RECHAZADA":"mal","VENCIDA":"mal","PENDIENTE REINTENTO":"aviso","EN ATENCIÓN":"aviso","ABIERTA":"aviso","RESERVADA":""}[e] ?? "";
+  return `<span class="chip ${clase}">${esc(e)}</span>`;
+};
+const requiereSesion = cont => { $(cont).innerHTML = `<div class="aviso-rol">Inicie sesión con un rol (arriba a la derecha) para ver esta información.</div>`; };
+
+async function cargarTablero() {
+  if (!sesion) { requiereSesion("#kpis"); $("#barras").innerHTML = ""; $("#eventos").innerHTML = ""; return; }
+  const t = await api("/tablero");
+  const cb = t.circuito.estado;
+  $("#kpis").innerHTML = [
+    [t.solicitudes_activas, "Solicitudes activas"],
+    [`${t.donantes_elegibles}/${t.donantes_registrados}`, "Donantes elegibles"],
+    [t.tasa_respuesta + " %", "Tasa de respuesta a alertas"],
+    [cb, "Circuito de notificaciones"],
+    [t.cache.tasa_aciertos + " %", `Aciertos de caché (${t.cache.aciertos}/${t.cache.aciertos + t.cache.fallos})`],
+  ].map(([v, e]) => `<div class="kpi"><b>${esc(v)}</b><span>${esc(e)}</span></div>`).join("");
+  const max = Math.max(5, ...Object.values(t.inventario));
+  $("#barras").innerHTML = TIPOS.map(tp => {
+    const n = t.inventario[tp] ?? 0;
+    return `<div class="barra ${t.criticos.includes(tp) ? "critico" : ""}"><span class="tipo">${tp}</span>
+      <div class="pista"><div class="relleno" style="width:${n / max * 100}%"></div></div><span>${n}</span></div>`;
+  }).join("");
+  $("#eventos").innerHTML = t.eventos.map(e => `<li><span>${e.hora}</span><div><code>${esc(e.tipo)}</code>
+    <small>${esc(Object.entries(e.datos).map(([k, v]) => k + ": " + v).join(" · "))}</small></div></li>`).join("") || "<li>Sin eventos todavía</li>";
+}
+
+async function cargarSolicitudes() {
+  if (!sesion) return requiereSesion("#t-solicitudes");
+  const s = await api("/solicitudes");
+  $("#t-solicitudes").innerHTML = tabla([
+    ["Código", x => esc(x.id)], ["Hospital", x => esc(x.hospital)], ["Receptor", x => `<b>${esc(x.tipo_receptor)}</b>`],
+    ["Componente", x => esc(x.componente)], ["Urgencia", x => esc(x.urgencia)],
+    ["Reservadas", x => `${x.unidades_reservadas} de ${x.unidades_requeridas}`],
+    ["Donantes comprometidos", x => x.donantes_comprometidos], ["Estado", x => chipEstado(x.estado)], ["Hora", x => esc(x.fecha.slice(11))],
+  ], s, "Aún no hay solicitudes publicadas.");
+}
+
+async function cargarDonantes() {
+  if (!sesion || sesion.rol === "hospital") {
+    $("#t-donantes").innerHTML = `<div class="aviso-rol">La lista completa de donantes solo es visible para el banco de sangre y el administrador (datos sensibles).</div>`;
+    return;
+  }
+  const d = await api("/donantes");
+  $("#t-donantes").innerHTML = tabla([
+    ["Documento", x => esc(x.documento)], ["Nombre", x => esc(x.nombre)], ["Tipo", x => `<b>${esc(x.tipo)}</b>`],
+    ["Edad", x => x.edad], ["Última donación", x => esc(x.ultima_donacion || "Nunca")], ["Canal", x => esc(x.canal)],
+    ["Elegibilidad", x => x.elegible ? chipEstado("DISPONIBLE").replace("DISPONIBLE", "ELEGIBLE") : `<span class="chip mal">NO ELEGIBLE</span><br><small>${esc(x.motivos.join(" "))}</small>`],
+  ], d);
+}
+
+async function cargarInventario() {
+  if (!sesion) return requiereSesion("#t-inventario");
+  const u = await api("/inventario");
+  $("#t-inventario").innerHTML = tabla([
+    ["Código", x => esc(x.codigo)], ["Tipo", x => `<b>${esc(x.tipo)}</b>`], ["Componente", x => esc(x.componente)],
+    ["Sede", x => esc(x.sede)], ["Vence", x => esc(x.vence)], ["Estado", x => chipEstado(x.estado)], ["Solicitud", x => esc(x.solicitud_id || "")],
+  ], u);
+}
+
+async function cargarAlertas() {
+  if (!sesion) { requiereSesion("#t-alertas"); $("#datos-cb").innerHTML = ""; return; }
+  const [cb, al] = await Promise.all([api("/notificaciones/estado"), api("/alertas")]);
+  $("#foco").className = "foco " + cb.estado; $("#foco").textContent = cb.estado;
+  $("#datos-cb").innerHTML = `Fallos consecutivos: <b>${cb.fallos_consecutivos}</b> de ${cb.umbral}<br>
+    Llamadas rechazadas sin esperar: <b>${cb.llamadas_rechazadas}</b><br>
+    ${cb.estado === "ABIERTO" ? `Prueba de reconexión en <b>${cb.segundos_para_reintento} s</b><br>` : ""}
+    Proveedor: <b>${cb.falla_simulada ? "caído (simulado)" : "operativo"}</b>`;
+  $("#b-falla").textContent = cb.falla_simulada ? "Restablecer proveedor" : "Simular caída del proveedor";
+  $("#b-falla").dataset.activa = cb.falla_simulada ? "1" : "";
+  $("#t-alertas").innerHTML = tabla([
+    ["Alerta", x => esc(x.id)], ["Solicitud", x => esc(x.solicitud_id)], ["Donante", x => esc(x.donante)], ["Tipo", x => `<b>${esc(x.tipo)}</b>`],
+    ["Canal", x => esc(x.canal)], ["Estado", x => chipEstado(x.estado) + `<br><small>${esc(x.detalle)}</small>`],
+    ["Respuesta del donante", x => x.estado === "ENVIADA" ? `<button class="btn mini" data-resp="${x.id}" data-acepta="1">Aceptar</button>
+      <button class="btn mini sec" data-resp="${x.id}" data-acepta="">Rechazar</button>` : ""],
+  ], al, "Aún no se han enviado alertas. Publique una solicitud de un tipo escaso, por ejemplo O-.");
+}
+
+const CARGAS = {tablero: cargarTablero, solicitudes: cargarSolicitudes, donantes: cargarDonantes, inventario: cargarInventario, alertas: cargarAlertas};
+let vista = "tablero";
+function refrescar() { CARGAS[vista]().catch(e => toast(e.message)); }
+
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
+  vista = b.dataset.vista;
+  document.querySelectorAll("nav button").forEach(x => x.classList.toggle("activo", x === b));
+  document.querySelectorAll(".vista").forEach(v => v.classList.toggle("activa", v.id === "v-" + vista));
+  refrescar();
+});
+document.querySelectorAll(".btn-rol").forEach(b => b.onclick = () => entrar(b.dataset.usuario));
+["#sel-tipo", "#sel-tipo2"].forEach(s => $(s).innerHTML = TIPOS.map(t => `<option>${t}</option>`).join(""));
+
+const datosForm = f => Object.fromEntries(new FormData(f));
+
+$("#f-solicitud").onsubmit = async ev => {
+  ev.preventDefault();
+  if (!sesion || sesion.rol !== "hospital") return toast("Inicie sesión como Hospital para publicar.");
+  const d = datosForm(ev.target); d.unidades_requeridas = Number(d.unidades_requeridas);
+  try {
+    const s = await api("/solicitudes", {method: "POST", body: JSON.stringify(d)});
+    $("#r-solicitud").innerHTML = `<div class="aviso-rol">Solicitud <b>${esc(s.id)}</b> publicada. Reservadas <b>${s.unidades_reservadas}</b> de ${s.unidades_requeridas} unidades en inventario` +
+      (s.pendientes ? `; se alertó a donantes compatibles por las <b>${s.pendientes}</b> faltantes (ver pestaña Alertas).` : ". Solicitud cubierta.") + `</div>`;
+    refrescar();
+  } catch (e) { toast(e.message); }
+};
+
+$("#f-donante").onsubmit = async ev => {
+  ev.preventDefault();
+  const d = datosForm(ev.target); d.peso_kg = Number(d.peso_kg); d.consentimiento_datos = ev.target.consentimiento_datos.checked;
+  try {
+    const r = await api("/donantes", {method: "POST", body: JSON.stringify(d)});
+    $("#r-donante").innerHTML = `<div class="aviso-rol">Registro exitoso. ` + (r.elegible ? "El donante es <b>elegible</b> para donar." : "No es elegible por ahora: " + esc(r.motivos.join(" "))) + "</div>";
+    refrescar();
+  } catch (e) { toast(e.message); }
+};
+
+$("#f-donacion").onsubmit = async ev => {
+  ev.preventDefault();
+  if (!sesion || sesion.rol !== "banco") return toast("Inicie sesión como Banco de sangre.");
+  try {
+    const u = await api("/donaciones", {method: "POST", body: JSON.stringify(datosForm(ev.target))});
+    $("#r-donacion").innerHTML = `<div class="aviso-rol">Unidad <b>${esc(u.codigo)}</b> (${esc(u.tipo)}, ${esc(u.componente)}) registrada, vence ${esc(u.vence)}.` +
+      (u.solicitud_id ? ` Asignada automáticamente a la solicitud <b>${esc(u.solicitud_id)}</b>.` : "") + "</div>";
+    refrescar();
+  } catch (e) { toast(e.message); }
+};
+
+$("#b-falla").onclick = async () => {
+  if (!sesion || sesion.rol !== "admin") return toast("Solo el Administrador puede simular la falla.");
+  try { await api("/notificaciones/simular-falla", {method: "POST", body: JSON.stringify({activa: !$("#b-falla").dataset.activa})}); refrescar(); }
+  catch (e) { toast(e.message); }
+};
+$("#b-reintentar").onclick = async () => {
+  try { const r = await api("/notificaciones/reintentar", {method: "POST"}); toast(`Reintento: ${r.reenviadas} alertas enviadas. Circuito ${r.circuito.estado}.`); refrescar(); }
+  catch (e) { toast(e.message); }
+};
+$("#t-alertas").onclick = async ev => {
+  const b = ev.target.closest("[data-resp]"); if (!b) return;
+  try { await api(`/alertas/${b.dataset.resp}/respuesta`, {method: "POST", body: JSON.stringify({acepta: !!b.dataset.acepta})}); refrescar(); }
+  catch (e) { toast(e.message); }
+};
+
+pintarSesion(); refrescar();
+setInterval(() => { if (vista === "tablero" || vista === "alertas") refrescar(); }, 5000);
+</script>
+</body>
+</html>
