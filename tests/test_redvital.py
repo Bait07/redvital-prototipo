@@ -137,3 +137,14 @@ def test_donacion_se_asigna_a_solicitud_abierta():
     assert u["solicitud_id"] == s["id"]
     # Donar de nuevo el mismo día no es posible
     assert cliente.post("/api/donaciones", headers=banco, json={"documento": "99887766"}).status_code == 422
+
+
+def test_reiniciar_demo_solo_admin_y_restablece_datos():
+    app.state.contenedor = crear_contenedor()
+    cliente = TestClient(app)
+    hosp = _token(cliente, "hospital", "hospital123")
+    admin = _token(cliente, "admin", "admin123")
+    cliente.post("/api/solicitudes", headers=hosp, json={"tipo_receptor": "O-", "unidades_requeridas": 1})
+    assert cliente.post("/api/demo/reiniciar", headers=hosp).status_code == 403
+    assert cliente.post("/api/demo/reiniciar", headers=admin).status_code == 200
+    assert cliente.get("/api/solicitudes", headers=admin).json() == []

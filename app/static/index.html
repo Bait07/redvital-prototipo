@@ -180,6 +180,7 @@
         <div style="display:flex; gap:8px; flex-wrap:wrap; margin-left:auto">
           <button class="btn peligro" id="b-falla">Simular caída del proveedor</button>
           <button class="btn sec" id="b-reintentar">Reintentar pendientes</button>
+          <button class="btn sec" id="b-reiniciar" title="Solo administrador">Reiniciar datos de demo</button>
         </div>
       </div>
     </div>
@@ -367,6 +368,12 @@ $("#b-falla").onclick = async () => {
 };
 $("#b-reintentar").onclick = async () => {
   try { const r = await api("/notificaciones/reintentar", {method: "POST"}); toast(`Reintento: ${r.reenviadas} alertas enviadas. Circuito ${r.circuito.estado}.`); refrescar(); }
+  catch (e) { toast(e.message); }
+};
+$("#b-reiniciar").onclick = async () => {
+  if (!sesion || sesion.rol !== "admin") return toast("Solo el Administrador puede reiniciar los datos.");
+  if (!confirm("¿Restablecer los datos de demostración? Se borran solicitudes, alertas y donaciones registradas.")) return;
+  try { await api("/demo/reiniciar", {method: "POST"}); toast("Datos de demostración restablecidos."); refrescar(); }
   catch (e) { toast(e.message); }
 };
 $("#t-alertas").onclick = async ev => {
